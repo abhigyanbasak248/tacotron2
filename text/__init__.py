@@ -2,6 +2,9 @@
 import re
 from text import cleaners
 from text.symbols import symbols
+import g2p_en
+from string import digits
+g2p=g2p_en.G2p()
 
 
 # Mappings from symbol to numeric ID and vice versa:
@@ -28,15 +31,20 @@ def text_to_sequence(text, cleaner_names):
   sequence = []
 
   # Check for curly braces and treat their contents as ARPAbet:
-  while len(text):
-    m = _curly_re.match(text)
+  text1 = " ".join(
+                  [
+                      f"{{{s.strip()}}}" if not any(s.strip() == i for i in list(",.!?@#$%^&*()")) else s.strip()
+                      for s in " ".join(g2p(text)).split("  ")
+                  ]
+              )
+  while len(text1):
+    m = _curly_re.match(text1)
     if not m:
-      sequence += _symbols_to_sequence(_clean_text(text, cleaner_names))
+      sequence += _symbols_to_sequence(_clean_text(text1, cleaner_names))
       break
     sequence += _symbols_to_sequence(_clean_text(m.group(1), cleaner_names))
     sequence += _arpabet_to_sequence(m.group(2))
-    text = m.group(3)
-
+    text1 = m.group(3)
   return sequence
 
 
